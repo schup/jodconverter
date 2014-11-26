@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.artofsolving.jodconverter.util.PlatformUtils;
 
+
 import com.sun.star.beans.PropertyValue;
 import com.sun.star.uno.UnoRuntime;
 
@@ -49,17 +50,17 @@ public class OfficeUtils {
         return propertyValue;
     }
 
-    public static PropertyValue[] toUnoProperties(Map<String, ?> properties) {
+    public static PropertyValue[] toUnoProperties(Map<String,?> properties) {
         PropertyValue[] propertyValues = new PropertyValue[properties.size()];
         int i = 0;
-        for (Map.Entry<String, ?> entry : properties.entrySet()) {
+        for (Map.Entry<String,?> entry : properties.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Map) {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> subProperties = (Map<String, Object>) value;
+                Map<String,Object> subProperties = (Map<String,Object>) value;
                 value = toUnoProperties(subProperties);
             }
-            propertyValues[i++] = property(entry.getKey(), value);
+            propertyValues[i++] = property((String) entry.getKey(), value);
         }
         return propertyValues;
     }
@@ -82,11 +83,17 @@ public class OfficeUtils {
      * @return Office home found
      */
     public static File getDefaultOfficeHome() {
-        String officeHome = System.getProperty("office.home");
-        if (officeHome == null) {
-            officeHome = PlatformUtils.findOfficeHome();
+        if (System.getProperty("office.home") != null) {
+            return new File(System.getProperty("office.home"));
         }
-        return new File(officeHome);
+        if (PlatformUtils.isWindows()) {
+            return new File(System.getenv("ProgramFiles"), "OpenOffice.org 3");
+        } else if (PlatformUtils.isMac()) {
+            return new File("/Applications/OpenOffice.org.app/Contents");
+        } else {
+            // Linux or Solaris
+            return new File("/opt/openoffice.org3");
+        }
     }
 
     /**
@@ -98,11 +105,17 @@ public class OfficeUtils {
      * @return Office profile found
      */
     public static File getDefaultProfileDir() {
-        String officeProfile = System.getProperty("office.profile");
-        if (officeProfile == null) {
-            officeProfile = PlatformUtils.findOfficeProfileDir();
+        if (System.getProperty("office.profile") != null) {
+            return new File(System.getProperty("office.profile"));
         }
-        return new File(officeProfile);
+        if (PlatformUtils.isWindows()) {
+            return new File(System.getenv("APPDATA"), "OpenOffice.org/3");
+        } else if (PlatformUtils.isMac()) {
+            return new File(System.getProperty("user.home"), "Library/Application Support/OpenOffice.org/3");
+        } else {
+            // Linux or Solaris
+            return new File(System.getProperty("user.home"), ".openoffice.org/3");
+        }
     }
 
     public static File getOfficeExecutable(File officeHome) {
